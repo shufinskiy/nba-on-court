@@ -1,8 +1,8 @@
 [tool.poetry]
 
-name = "player_on_court"
+name = "nba-on-court"
 version = "0.1.0"
-description = "Adding players on court to  play-by-play data"
+description = "Adding players on court to play-by-play data"
 authors = ["Vladislav Shufinskiy <shufinsky.90210@gmail.com>"]
 
 [tool.poetry.dependencies]
