@@ -6,6 +6,13 @@ Adding data about players on court in NBA games.
 **nba_on_court** package allows you to add to  play-by-play data information
 about players who were on court at any given time.
 
+Instalation
+-----------
+::
+
+    pip install nba-on-court
+
+
 **Important: This package does not request play-by-play data from NBA website.
 You need to get them in advance, for example, using nba_api package.**
 
