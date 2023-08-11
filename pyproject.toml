@@ -1,21 +1,44 @@
-[tool.poetry]
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
+[tool.poetry]
 name = "nba-on-court"
-version = "0.1.1"
+version = "0.1.2"
 description = "Adding players on court to play-by-play data"
-authors = ["Vladislav Shufinskiy <shufinsky.90210@gmail.com>"]
+license = "MIT"
+authors = [
+     "Vladislav Shufinsky <shufinsky.90210@gmail.com>",
+]
+maintainers = [
+    "Vladislav Shufinsky <shufinsky.90210@gmail.com>",
+]
+readme = "README.md"
+repository = "https://github.com/shufinskiy/nba-on-court"
+documentation = "https://github.com/shufinskiy/nba-on-court/blob/master/README.md"
+keywords = ["api", "basketball", "data", "nba", "sports", "stats"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development"
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
 pandas = "^1.3.5"
 requests = "^2.23.0"
 nba-api = "^1.1.8"
+numpy = "^1.22.2"
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/shufinskiy/nba-on-court/issues"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
 pytest-cov = "^3.0.0"
-pytest-flake8 = "^1.1.0"
+flake8 = "^4.0.1"
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.pytest.ini_options]
+testpaths = "./tests/"
