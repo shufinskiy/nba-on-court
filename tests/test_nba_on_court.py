@@ -2,13 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nba_on_court import __version__
 from nba_on_court import nba_on_court
 from requests import ConnectionError
-
-
-def test_version():
-    assert __version__ == '0.1.1'
 
 
 def test_players_start_quater(ten_players_period):
@@ -34,7 +29,7 @@ def test_nine_players(nine_players_period):
 def test_lost_internet(nine_players_period):
     with pytest.raises(ConnectionError):
         nba_on_court.players_on_court(nine_players_period,
-                                               timeout=0.00001)
+                                      timeout=0.00001)
 
 
 def test_eleven_players(eleven_players_period):
