@@ -28,9 +28,9 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.8"
 pandas = "^1.3.5"
-requests = "^2.23.0"
+requests = "*"
 nba-api = "^1.1.8"
-numpy = "^1.22.2"
+numpy = "^1.0.0"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/shufinskiy/nba-on-court/issues"
