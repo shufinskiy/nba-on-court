@@ -2,8 +2,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nba_on_court import nba_on_court
+from nba_on_court import nba_on_court, __version__
 from requests import ConnectionError
+
+
+def test_version():
+    assert __version__ == '0.1.8'
 
 
 def test_players_start_quater(ten_players_period):
