@@ -1,4 +1,5 @@
 import warnings
+import re
 from pathlib import Path
 from itertools import product
 import urllib.request
@@ -10,11 +11,12 @@ import numpy as np
 import pandas as pd
 from nba_api.stats.endpoints import boxscoretraditionalv2, commonallplayers
 from requests import ConnectionError
+from polyleven import levenshtein
 
 warnings.filterwarnings('ignore')
 
 
-def convert_timestring_to_second(data: pd.DataFrame, column: str) -> pd.Series:
+def _convert_timestring_to_second(data: pd.DataFrame, column: str) -> pd.Series:
     """Converting a string of game time into a numeric of seconds from the start of the game.
 
     Args:
@@ -33,7 +35,7 @@ def convert_timestring_to_second(data: pd.DataFrame, column: str) -> pd.Series:
     return timegame
 
 
-def players_in_quater(data: pd.DataFrame, all_id: Optional[np.ndarray] = None) -> np.ndarray:
+def _players_in_quater(data: pd.DataFrame, all_id: Optional[np.ndarray] = None) -> np.ndarray:
     """Getting array of PLAYER_ID players who were on court at start of quarter.
 
     Args:
@@ -73,7 +75,7 @@ def players_in_quater(data: pd.DataFrame, all_id: Optional[np.ndarray] = None) -
     return all_id
 
 
-def sort_players(data: pd.DataFrame, all_id: np.ndarray) -> List:
+def _sort_players(data: pd.DataFrame, all_id: np.ndarray) -> List:
     """Sorting players on court by teams (first away team, then home team)
 
     Args:
@@ -97,7 +99,7 @@ def sort_players(data: pd.DataFrame, all_id: np.ndarray) -> List:
     return pl_id
 
 
-def fill_columns(data: pd.DataFrame, all_id: Union[np.ndarray, List]) -> pd.DataFrame:
+def _fill_columns(data: pd.DataFrame, all_id: Union[np.ndarray, List]) -> pd.DataFrame:
     """Adding columns with PLAYER_ID on court
 
     Args:
@@ -135,14 +137,14 @@ def players_on_court(data: pd.DataFrame, **kwargs: Dict[str, float]) -> pd.DataF
     args = kwargs
     data.columns = [x.upper() for x in data.columns]
     if isinstance(data["PCTIMESTRING"][0], str):
-        data["PCTIMESTRING"] = convert_timestring_to_second(data, "PCTIMESTRING")
+        data["PCTIMESTRING"] = _convert_timestring_to_second(data, "PCTIMESTRING")
     d = dict()
     for period in data["PERIOD"].unique():
         df = data.loc[data["PERIOD"] == period]
-        all_id = players_in_quater(df)
+        all_id = _players_in_quater(df)
         if len(all_id) == 10:
-            all_id = sort_players(df, all_id)
-            d[period] = fill_columns(df, all_id)
+            all_id = _sort_players(df, all_id)
+            d[period] = _fill_columns(df, all_id)
         else:
             retry = 0
             bx = ""
@@ -163,8 +165,8 @@ def players_on_court(data: pd.DataFrame, **kwargs: Dict[str, float]) -> pd.DataF
                 raise ConnectionError(bx)
             player_stats = bx.player_stats.get_data_frame()
             all_id = np.array([player_stats.PLAYER_ID]).ravel()
-            all_id = players_in_quater(df, all_id)
-            d[period] = fill_columns(df, all_id)
+            all_id = _players_in_quater(df, all_id)
+            d[period] = _fill_columns(df, all_id)
 
     return pd.concat(d, axis=0, ignore_index=True)
 
@@ -279,3 +281,184 @@ def get_nba_data(path: Union[Path, str] = Path.cwd(),
                 f.extract("".join([need_name[i], ".csv"]), path)
 
             path.joinpath("".join([need_name[i], ".tar.xz"])).unlink()
+
+
+def _concat_description(homedescription: pd.Series,
+                        neutraldescription: pd.Series,
+                        visitordescription: pd.Series) -> pd.Series:
+    return pd.Series([re.sub(r' +', r' ', ' '.join([home, neutral, visit]).strip()) for home, neutral, visit \
+                      in zip((homedescription).where(~pd.isna(homedescription), ''),
+                             (neutraldescription).where(~pd.isna(neutraldescription), ''),
+                             (visitordescription).where(~pd.isna(visitordescription), ''))])
+
+
+def _transform_nbastats(nbastats: pd.DataFrame) -> pd.DataFrame:
+    nbastats.PCTIMESTRING = _convert_timestring_to_second(nbastats.PCTIMESTRING, nbastats.PERIOD)
+    nbastats['DESCRIPTION'] = _concat_description(nbastats.HOMEDESCRIPTION,
+                                                  nbastats.NEUTRALDESCRIPTION,
+                                                  nbastats.VISITORDESCRIPTION).str.lower()
+    nbastats.drop(columns=['HOMEDESCRIPTION', 'NEUTRALDESCRIPTION', 'VISITORDESCRIPTION'], inplace=True)
+    return nbastats
+
+
+def _transform_pbpstats(pbpstats: pd.DataFrame) -> pd.DataFrame:
+    pbpstats['ENDTIME'] = _convert_timestring_to_second(pbpstats.ENDTIME, pbpstats.PERIOD)
+    pbpstats['STARTTIME'] = _convert_timestring_to_second(pbpstats.STARTTIME, pbpstats.PERIOD)
+    pbpstats['EVENT_IN_POSS'] = pbpstats.groupby('ENDTIME').cumcount()
+    pbpstats = pbpstats.sort_values(by=['STARTTIME', 'ENDTIME', 'EVENT_IN_POSS']).reset_index(drop=True)
+    pbpstats['DESCRIPTION'] = pd.Series(['' if pd.isna(desc) else desc for desc in pbpstats['DESCRIPTION']])
+    pbpstats['DESCRIPTION'] = pd.Series([re.sub(' +', ' ', x) for x in pbpstats['DESCRIPTION']]).str.lower()
+    return pbpstats
+
+
+def left_join_nbastats(nbastats: pd.DataFrame, pbpstats: pd.DataFrame, alpha: int = 5,
+                       beta: float = 0.2, debug: bool = False,
+                       warnings: bool = False) -> Union[pd.DataFrame, np.ndarray]:
+    verbose_warnings = False
+
+    nbastats = _transform_nbastats(nbastats.reset_index(drop=True))
+    pbpstats = _transform_pbpstats(pbpstats.reset_index(drop=True))
+
+    cnt_period = np.max(nbastats['PERIOD'])
+    df = pd.DataFrame()
+    if debug:
+        debug_ind = 0
+        db_array = np.zeros(pbpstats.shape[0])
+    for nperiod in range(1, cnt_period + 1):
+        nba_period = nbastats[nbastats['PERIOD'] == nperiod].reset_index(drop=True)
+        pbp_period = pbpstats[pbpstats['PERIOD'] == nperiod].reset_index(drop=True)
+
+        nba_period['STATS_KEY'] = nba_period['GAME_ID'].index
+        pbp_period['PBP_KEY'] = pbp_period['GAMEID'].index
+        pbp_period['STATS_KEY'] = 0
+
+        for i in range(nba_period.shape[0]):
+            time = nba_period['PCTIMESTRING'].iloc[i]
+            nba_desc = nba_period['DESCRIPTION'].iloc[i]
+
+            tmp_pbp = pbp_period.loc[(pbp_period['STARTTIME'] < time + alpha) & (pbp_period['ENDTIME'] > time - alpha),
+            ['DESCRIPTION', 'PBP_KEY']]
+            pbp_desc = tmp_pbp['DESCRIPTION'].reset_index(drop=True)
+            pbp_key = tmp_pbp['PBP_KEY'].reset_index(drop=True)
+
+            dist_lev = np.array([levenshtein(nba_desc, pbp_desc[i]) / np.max([len(nba_desc), len(pbp_desc[i])]) \
+                                 for i, _ in enumerate(pbp_desc)])
+
+            ind = np.where(dist_lev < beta)[0]
+            if len(ind) == 0:
+                continue
+            elif len(ind) > 1:
+                ind_cycle = 0
+                for _ in range(len(ind)):
+                    if pbp_period.loc[pbp_period['PBP_KEY'] == pbp_key[ind[ind_cycle]], 'STATS_KEY'] \
+                            .reset_index(drop=True).iloc[0] == 0:
+                        ind = ind[ind_cycle]
+                        break
+                    ind_cycle += 1
+            try:
+                ind = ind[0]
+            except IndexError:
+                pass
+            pbp_period.loc[pbp_period['PBP_KEY'] == pbp_key[ind], 'STATS_KEY'] = nba_period['STATS_KEY'].iloc[i]
+        try:
+            assert len(pbp_period.STATS_KEY) == len(pbp_period.STATS_KEY.unique())
+        except AssertionError:
+            if warnings:
+                verbose_warning = True
+        if debug:
+            n = pbp_period.STATS_KEY.to_numpy()
+            db_array[debug_ind:debug_ind + len(n)] = n
+            debug_ind += len(n)
+        else:
+            df = pd.concat([df,
+                            (nba_period
+                             .merge(pbp_period.drop(columns=['PERIOD']), how='left',
+                                    on='STATS_KEY', suffixes=['_STATS', '_PBP'])
+                             .drop(columns=['STATS_KEY', 'PBP_KEY', 'EVENT_IN_POSS']))],
+                           axis=0, ignore_index=True)
+    if debug:
+        if verbose_warnings:
+            print('Предупреждение: возможна ошибка в данных')
+        return db_array
+    else:
+        if verbose_warnings:
+            print('Предупреждение: возможна ошибка в данных')
+        return df
+
+
+def left_join_pbpstats(nbastats: pd.DataFrame, pbpstats: pd.DataFrame, alpha: int = 5,
+                       beta: float = 0.2, debug: bool = False,
+                       warnings: bool = False) -> Union[pd.DataFrame, np.ndarray]:
+    verbose_warnings = False
+
+    nbastats = _transform_nbastats(nbastats.reset_index(drop=True))
+    pbpstats = _transform_pbpstats(pbpstats.reset_index(drop=True))
+
+    cnt_period = np.max(nbastats['PERIOD'])
+    df = pd.DataFrame()
+    if debug:
+        debug_ind = 0
+        db_array = np.zeros(pbpstats.shape[0])
+    for nperiod in range(1, cnt_period + 1):
+        nba_period = nbastats[nbastats['PERIOD'] == nperiod].reset_index(drop=True)
+        pbp_period = pbpstats[pbpstats['PERIOD'] == nperiod].reset_index(drop=True)
+
+        nba_period['STATS_KEY'] = nba_period['GAME_ID'].index + 1
+        pbp_period['PBP_KEY'] = pbp_period['GAMEID'].index
+        pbp_period['STATS_KEY'] = 1000
+
+        for i in range(pbp_period.shape[0]):
+            time = np.array([pbp_period['STARTTIME'].iloc[i], pbp_period['ENDTIME'].iloc[i]])
+            pbp_desc = pbp_period['DESCRIPTION'].iloc[i]
+
+            tmp_nba = nba_period.loc[(nba_period['PCTIMESTRING'] > time[0] - alpha) \
+                                     & (nba_period['PCTIMESTRING'] < time[1] + alpha),
+            ['DESCRIPTION', 'STATS_KEY']]
+            nba_desc = tmp_nba['DESCRIPTION'].reset_index(drop=True)
+            nba_key = tmp_nba['STATS_KEY'].reset_index(drop=True)
+
+            dist_lev = np.array([levenshtein(pbp_desc, nba_desc[i]) / np.max([len(pbp_desc), len(nba_desc[i])]) \
+                                 for i, _ in enumerate(nba_desc)])
+
+            ind = np.where(dist_lev < beta)[0]
+            if len(ind) == 0:
+                continue
+            elif len(ind) > 1:
+                ind_cycle = 0
+                for _ in range(len(ind)):
+                    if pbp_period.loc[pbp_period['STATS_KEY'] == nba_key[ind[ind_cycle]]].shape[0] == 0:
+                        ind = ind[ind_cycle]
+                        break
+                    ind_cycle += 1
+            try:
+                ind = ind[0]
+            except IndexError:
+                pass
+            pbp_period.loc[pbp_period['PBP_KEY'] == i,
+            'STATS_KEY'] = nba_period.loc[nba_period['STATS_KEY'] == nba_key[ind],
+            'STATS_KEY'].reset_index(drop=True).iloc[0]
+
+        try:
+            assert len(pbp_period.STATS_KEY) == len(pbp_period.STATS_KEY.unique())
+        except AssertionError:
+            if warnings:
+                verbose_warnings = True
+        if debug:
+            n = pbp_period.STATS_KEY.to_numpy()
+            db_array[debug_ind:debug_ind + len(n)] = n
+            debug_ind += len(n)
+        else:
+            df = pd.concat([df,
+                            (pbp_period
+                             .merge(nba_period.drop(columns=['PERIOD']), how='left',
+                                    on='STATS_KEY', suffixes=['_PBP', '_STATS'], sort=True)
+                             .drop(columns=['STATS_KEY', 'PBP_KEY', 'EVENT_IN_POSS']))],
+                           axis=0, ignore_index=True)
+    if debug:
+        if verbose_warnings:
+            print('Предупреждение: возможна ошибка в данных')
+        return db_array
+    else:
+        if verbose_warnings:
+            print('Предупреждение: возможна ошибка в данных')
+        return df
