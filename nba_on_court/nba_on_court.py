@@ -227,11 +227,11 @@ def players_name(id_players: Union[pd.Series, np.ndarray, List],
 
     return name_players
 
-def get_nba_data(path: Union[Path, str] = Path.cwd(),
-                 seasons: Union[Sequence, int] = range(1996, 2023),
-                 data: Union[Sequence, str] = ("datanba", "nbastats", "pbpstats", "shotdetail"),
-                 seasontype: str = 'rg',
-                 untar: bool = False) -> None:
+def load_nba_data(path: Union[Path, str] = Path.cwd(),
+                  seasons: Union[Sequence, int] = range(1996, 2023),
+                  data: Union[Sequence, str] = ("datanba", "nbastats", "pbpstats", "shotdetail"),
+                  seasontype: str = 'rg',
+                  untar: bool = False) -> None:
     """
     Loading a nba play-by-play dataset from github repository https://github.com/shufinskiy/nba_data
 
