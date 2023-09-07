@@ -274,7 +274,6 @@ def load_nba_data(path: Union[Path, str] = Path.cwd(),
     for i in range(len(need_name)):
         t = urllib.request.urlopen(need_element[i])
         with path.joinpath("".join([need_name[i], ".tar.xz"])).open(mode='wb') as f:
-        # with open("".join([need_name[i], ".tar.xz"]), 'wb') as f:
             f.write(t.read())
         if untar:
             with tarfile.open(path.joinpath("".join([need_name[i], ".tar.xz"]))) as f:
@@ -286,6 +285,16 @@ def load_nba_data(path: Union[Path, str] = Path.cwd(),
 def _concat_description(homedescription: pd.Series,
                         neutraldescription: pd.Series,
                         visitordescription: pd.Series) -> pd.Series:
+    """
+
+    Args:
+        homedescription:
+        neutraldescription:
+        visitordescription:
+
+    Returns:
+
+    """
     return pd.Series([re.sub(r' +', r' ', ' '.join([home, neutral, visit]).strip()) for home, neutral, visit \
                       in zip((homedescription).where(~pd.isna(homedescription), ''),
                              (neutraldescription).where(~pd.isna(neutraldescription), ''),
@@ -293,6 +302,14 @@ def _concat_description(homedescription: pd.Series,
 
 
 def _transform_nbastats(nbastats: pd.DataFrame) -> pd.DataFrame:
+    """
+
+    Args:
+        nbastats:
+
+    Returns:
+
+    """
     nbastats.PCTIMESTRING = _convert_timestring_to_second(nbastats.PCTIMESTRING, nbastats.PERIOD)
     nbastats['DESCRIPTION'] = _concat_description(nbastats.HOMEDESCRIPTION,
                                                   nbastats.NEUTRALDESCRIPTION,
@@ -302,6 +319,14 @@ def _transform_nbastats(nbastats: pd.DataFrame) -> pd.DataFrame:
 
 
 def _transform_pbpstats(pbpstats: pd.DataFrame) -> pd.DataFrame:
+    """
+
+    Args:
+        pbpstats:
+
+    Returns:
+
+    """
     pbpstats['ENDTIME'] = _convert_timestring_to_second(pbpstats.ENDTIME, pbpstats.PERIOD)
     pbpstats['STARTTIME'] = _convert_timestring_to_second(pbpstats.STARTTIME, pbpstats.PERIOD)
     pbpstats['EVENT_IN_POSS'] = pbpstats.groupby('ENDTIME').cumcount()
@@ -314,6 +339,19 @@ def _transform_pbpstats(pbpstats: pd.DataFrame) -> pd.DataFrame:
 def left_join_nbastats(nbastats: pd.DataFrame, pbpstats: pd.DataFrame, alpha: int = 5,
                        beta: float = 0.2, debug: bool = False,
                        warnings: bool = False) -> Union[pd.DataFrame, np.ndarray]:
+    """
+
+    Args:
+        nbastats:
+        pbpstats:
+        alpha:
+        beta:
+        debug:
+        warnings:
+
+    Returns:
+
+    """
     verbose_warnings = False
 
     nbastats = _transform_nbastats(nbastats.reset_index(drop=True))
@@ -378,17 +416,30 @@ def left_join_nbastats(nbastats: pd.DataFrame, pbpstats: pd.DataFrame, alpha: in
                            axis=0, ignore_index=True)
     if debug:
         if verbose_warnings:
-            print('Предупреждение: возможна ошибка в данных')
+            print('Warning: there may be an error in data')
         return db_array
     else:
         if verbose_warnings:
-            print('Предупреждение: возможна ошибка в данных')
+            print('Warning: there may be an error in data')
         return df
 
 
 def left_join_pbpstats(nbastats: pd.DataFrame, pbpstats: pd.DataFrame, alpha: int = 5,
                        beta: float = 0.2, debug: bool = False,
                        warnings: bool = False) -> Union[pd.DataFrame, np.ndarray]:
+    """
+
+    Args:
+        nbastats:
+        pbpstats:
+        alpha:
+        beta:
+        debug:
+        warnings:
+
+    Returns:
+
+    """
     verbose_warnings = False
 
     nbastats = _transform_nbastats(nbastats.reset_index(drop=True))
@@ -456,9 +507,9 @@ def left_join_pbpstats(nbastats: pd.DataFrame, pbpstats: pd.DataFrame, alpha: in
                            axis=0, ignore_index=True)
     if debug:
         if verbose_warnings:
-            print('Предупреждение: возможна ошибка в данных')
+            print('Warning: there may be an error in data')
         return db_array
     else:
         if verbose_warnings:
-            print('Предупреждение: возможна ошибка в данных')
+            print('Warning: there may be an error in data')
         return df
