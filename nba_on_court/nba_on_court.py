@@ -168,7 +168,18 @@ def players_on_court(data: pd.DataFrame, **kwargs: Dict[str, float]) -> pd.DataF
             all_id = _players_in_quater(df, all_id)
             d[period] = _fill_columns(df, all_id)
 
-    return pd.concat(d, axis=0, ignore_index=True)
+    return pd.concat(d, axis=0, ignore_index=True).rename(columns={
+        "PLAYER1": 'AWAY_PLAYER1',
+        "PLAYER2": 'AWAY_PLAYER2',
+        "PLAYER3": 'AWAY_PLAYER3',
+        "PLAYER4": 'AWAY_PLAYER4',
+        "PLAYER5": 'AWAY_PLAYER5',
+        "PLAYER6": 'HOME_PLAYER1',
+        "PLAYER7": "HOME_PLAYER2",
+        "PLAYER8": "HOME_PLAYER3",
+        "PLAYER9": "HOME_PLAYER4",
+        "PLAYER10": "HOME_PLAYER5"
+    })
 
 
 @lru_cache()
