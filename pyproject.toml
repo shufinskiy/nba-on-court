@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "nba-on-court"
-version = "0.1.10"
+version = "0.1.11"
 description = "Adding players on court to play-by-play data"
 license = "MIT"
 authors = [
@@ -31,7 +31,7 @@ pandas = ">=1.3.5"
 requests = "*"
 nba-api = "^1.1.8"
 numpy = "^1.0.0"
-polyleven = "^0.8"
+polyleven = ">=0.8"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/shufinskiy/nba-on-court/issues"
