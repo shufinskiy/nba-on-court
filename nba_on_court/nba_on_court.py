@@ -297,14 +297,15 @@ def _concat_description(homedescription: pd.Series,
                         neutraldescription: pd.Series,
                         visitordescription: pd.Series) -> pd.Series:
     """
+    Merge description columns in nbastats play-by-play-data
 
     Args:
-        homedescription:
-        neutraldescription:
-        visitordescription:
+        homedescription (pd.Series): event description for home team
+        neutraldescription (pd.Series): neutral event description
+        visitordescription (pd.Series): event description for away team
 
     Returns:
-
+        pd.Series: columns with merge all description
     """
     return pd.Series([re.sub(r' +', r' ', ' '.join([home, neutral, visit]).strip()) for home, neutral, visit \
                       in zip((homedescription).where(~pd.isna(homedescription), ''),
@@ -314,12 +315,13 @@ def _concat_description(homedescription: pd.Series,
 
 def _transform_nbastats(nbastats: pd.DataFrame) -> pd.DataFrame:
     """
+    Convert timestring column to second and merge description columns.
 
     Args:
-        nbastats:
+        nbastats (pd.DataFrame): nbastats pla-by-play dataframe
 
     Returns:
-
+        pd.DataFrame: nbastats play-by-play dataframe with update columns
     """
     nbastats.PCTIMESTRING = _convert_timestring_to_second(nbastats.PCTIMESTRING, nbastats.PERIOD)
     nbastats['DESCRIPTION'] = _concat_description(nbastats.HOMEDESCRIPTION,
@@ -331,12 +333,13 @@ def _transform_nbastats(nbastats: pd.DataFrame) -> pd.DataFrame:
 
 def _transform_pbpstats(pbpstats: pd.DataFrame) -> pd.DataFrame:
     """
+    Data transformation pbpstats.com to merge with nbastats data
 
     Args:
-        pbpstats:
+        pbpstats (pd.DataFrame): pbpstats.com play-by-play dataframe
 
     Returns:
-
+        pd.DataFrame: pbpstats.com play-by-play dataframe with update columns
     """
     pbpstats['ENDTIME'] = _convert_timestring_to_second(pbpstats.ENDTIME, pbpstats.PERIOD)
     pbpstats['STARTTIME'] = _convert_timestring_to_second(pbpstats.STARTTIME, pbpstats.PERIOD)
@@ -351,17 +354,18 @@ def left_join_nbastats(nbastats: pd.DataFrame, pbpstats: pd.DataFrame, alpha: in
                        beta: float = 0.2, debug: bool = False,
                        warnings: bool = False) -> Union[pd.DataFrame, np.ndarray]:
     """
+    Left join pbpstats.com play-by-play data to nbastats play-by-play data
 
     Args:
-        nbastats:
-        pbpstats:
-        alpha:
-        beta:
-        debug:
-        warnings:
+        nbastats (pd.DataFrame): nbastats play-by-play dataframe
+        pbpstats (pd.DataFrame): pbpstats.com play-by-play dataframe
+        alpha (int): time range in sec to merge data
+        beta (float): max Levenstein distance for merge
+        debug (bool): enable debug mode
+        warnings (bool): print information about error in merge or not
 
     Returns:
-
+        Union[pd.DataFrame, np.ndarray]: merge play-by-play dataframe
     """
     verbose_warnings = False
 
@@ -439,17 +443,18 @@ def left_join_pbpstats(nbastats: pd.DataFrame, pbpstats: pd.DataFrame, alpha: in
                        beta: float = 0.2, debug: bool = False,
                        warnings: bool = False) -> Union[pd.DataFrame, np.ndarray]:
     """
+    Left join nbastats play-by-play data to pbpstats.com play-by-play data
 
     Args:
-        nbastats:
-        pbpstats:
-        alpha:
-        beta:
-        debug:
-        warnings:
+        nbastats (pd.DataFrame): nbastats play-by-play dataframe
+        pbpstats (pd.DataFrame): pbpstats.com play-by-play dataframe
+        alpha (int): time range in sec to merge data
+        beta (float): max Levenstein distance for merge
+        debug (bool): enable debug mode
+        warnings (bool): print information about error in merge or not
 
     Returns:
-
+        Union[pd.DataFrame, np.ndarray]: merge play-by-play dataframe
     """
     verbose_warnings = False
 
