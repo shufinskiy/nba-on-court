@@ -196,7 +196,7 @@ def _cache_player_info(**kwargs: Dict[str, float]) -> commonallplayers.CommonAll
     info = commonallplayers.CommonAllPlayers(
         is_only_current_season=args.get("is_only_current_season", 0),
         league_id=args.get("league_id", "00"),
-        season=args.get("season", "2021-22"),
+        season=args.get("season", "2022-23"),
         timeout=args.get("timeout", 10)
     )
     return info
