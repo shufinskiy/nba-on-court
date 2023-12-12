@@ -323,7 +323,7 @@ def _transform_nbastats(nbastats: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: nbastats play-by-play dataframe with update columns
     """
-    nbastats.PCTIMESTRING = _convert_timestring_to_second(nbastats.PCTIMESTRING, nbastats.PERIOD)
+    nbastats['PCTIMESTRING'] = _convert_timestring_to_second(nbastats, 'PCTIMESTRING')
     nbastats['DESCRIPTION'] = _concat_description(nbastats.HOMEDESCRIPTION,
                                                   nbastats.NEUTRALDESCRIPTION,
                                                   nbastats.VISITORDESCRIPTION).str.lower()
@@ -341,8 +341,8 @@ def _transform_pbpstats(pbpstats: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: pbpstats.com play-by-play dataframe with update columns
     """
-    pbpstats['ENDTIME'] = _convert_timestring_to_second(pbpstats.ENDTIME, pbpstats.PERIOD)
-    pbpstats['STARTTIME'] = _convert_timestring_to_second(pbpstats.STARTTIME, pbpstats.PERIOD)
+    pbpstats['ENDTIME'] = _convert_timestring_to_second(pbpstats, 'ENDTIME')
+    pbpstats['STARTTIME'] = _convert_timestring_to_second(pbpstats, 'STARTTIME')
     pbpstats['EVENT_IN_POSS'] = pbpstats.groupby('ENDTIME').cumcount()
     pbpstats = pbpstats.sort_values(by=['STARTTIME', 'ENDTIME', 'EVENT_IN_POSS']).reset_index(drop=True)
     pbpstats['DESCRIPTION'] = pd.Series(['' if pd.isna(desc) else desc for desc in pbpstats['DESCRIPTION']])
