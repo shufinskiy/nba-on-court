@@ -238,6 +238,7 @@ def players_name(id_players: Union[pd.Series, np.ndarray, List],
 
     return name_players
 
+
 def load_nba_data(path: Union[Path, str] = Path.cwd(),
                   seasons: Union[Sequence, int] = range(1996, 2023),
                   data: Union[Sequence, str] = ("datanba", "nbastats", "pbpstats", "shotdetail"),
@@ -247,6 +248,7 @@ def load_nba_data(path: Union[Path, str] = Path.cwd(),
     Loading a nba play-by-play dataset from github repository https://github.com/shufinskiy/nba_data
 
     Args:
+        path (Union[Path, str]): Path where downloaded file should be saved on the hard disk
         seasons (Union[Sequence, int]): Sequence or integer of the year of start of season
         data (Union[Sequence, str]): Sequence or string of data types to load
         seasontype (str): Part of season: rg - Regular Season, po - Playoffs
