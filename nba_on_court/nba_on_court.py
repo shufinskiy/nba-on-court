@@ -241,7 +241,8 @@ def players_name(id_players: Union[pd.Series, np.ndarray, List],
 
 def load_nba_data(path: Union[Path, str] = Path.cwd(),
                   seasons: Union[Sequence, int] = range(1996, 2023),
-                  data: Union[Sequence, str] = ("datanba", "nbastats", "pbpstats", "shotdetail"),
+                  data: Union[Sequence, str] = ("datanba", "nbastats", "pbpstats",
+                                                "shotdetail", "cdnnba", "nbastatsv3"),
                   seasontype: str = 'rg',
                   untar: bool = False) -> None:
     """
