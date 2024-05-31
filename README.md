@@ -7,6 +7,9 @@
 Fast download of play-by-play data and adding data about players on court in NBA games.
 ================================================
 
+Update [31-05-2024]: Added the opportunity to work with WNBA data from the repository [nba_data](https://github.com/shufinskiy/nba_data)
+------
+
 **nba_on_court** package allows you next things:
 1. Fast download play-by-play data from [nba_data](https://github.com/shufinskiy/nba_data) repository
 2. Add to play-by-play data information about players who were on court at any given time.
@@ -21,7 +24,7 @@ pip install nba-on-court
 
 Tutorial
 --------
-To understand work of library, you can study tutorials: in [russian](example/tutorial_ru.ipynb) and [english](example/tutorial_en.ipynb). There is also an interactive tutorial on **Google Colab**.
+To understand work of library, you can study tutorials: in [russian](https://github.com/shufinskiy/nba-on-court/blob/main/example/tutorial_ru.ipynb) and [english](https://github.com/shufinskiy/nba-on-court/blob/main/example/tutorial_en.ipynb). There is also an interactive tutorial on **Google Colab**.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MuUcSj59kl-FO4X-LBRxxOZtEZLfWLDT)
 

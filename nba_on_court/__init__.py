@@ -1,5 +1,5 @@
 name = 'nba-on-court'
-__version__ = '0.1.13'
+__version__ = '0.2.1'
 
 from nba_on_court.nba_on_court import (players_on_court,
                                        players_name,

@@ -7,7 +7,7 @@ from requests import ConnectionError
 
 
 def test_version():
-    assert __version__ == '0.1.13'
+    assert __version__ == '0.2.1'
 
 
 def test_players_start_quater(ten_players_period):
