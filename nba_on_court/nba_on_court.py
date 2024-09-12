@@ -280,6 +280,11 @@ def load_nba_data(path: Union[Path, str] = Path.cwd(),
     if league.lower() == 'wnba':
         need_data = ['wnba_' + x for x in need_data]
 
+    check_data = [file + ".csv" if untar else "tar.xz" for file in need_data]
+    not_exists = [not path.joinpath(check_file).is_file() for check_file in check_data]
+
+    need_data = [file for (file, not_exist) in zip(need_data, not_exists) if not_exist]
+
     with urllib.request.urlopen("https://raw.githubusercontent.com/shufinskiy/nba_data/main/list_data.txt") as f:
         v = f.read().decode('utf-8').strip()
 
