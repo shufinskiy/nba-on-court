@@ -9,27 +9,30 @@ BINWIDTHS = np.array([1.5, 1.5])
 
 def round_any(x: float, accuracy: float, f: Callable=round) -> float:
     """
+    Rounds a given floating-point number to a specified accuracy using a custom rounding function.
 
     Args:
-        x:
-        accuracy:
-        f:
+        x (float): The numeric value to be rounded.
+        accuracy (float): The target accuracy level to which `x` should be rounded.
+        f (Callable): A callable object that performs the actual rounding operation. Defaults to Python's built-in `round` function.
 
     Returns:
-
+        float: The rounded value, adjusted to the specified accuracy.
     """
     return f(x / accuracy) * accuracy
 
 
 def hex_bounds(x: Sequence, binwidth: float) -> np.ndarray:
     """
+    Calculates the boundary values for constructing hexagonal bins.
 
     Args:
-        x:
-        binwidth:
+        x (Sequence): The data sequence upon which hexagon boundaries are based.
+        binwidth (float): The width of each bin used in the hexagonal grid.
 
     Returns:
-
+        np.ndarray: An array containing the minimum and maximum boundary values
+                    for creating hexagonal bins, with adjustments made to ensure proper alignment.
     """
     return np.array([round_any(np.min(x), binwidth, np.floor) - 1e-6,
                      round_any(np.max(x), binwidth, np.ceil) + 1e-6])
@@ -42,17 +45,26 @@ def hexbin(x: Union[pd.Series, Sequence],
            ybnds: Sequence,
            shape: float) -> dict:
     """
+    Generates a hexagonal binning of input data points.
 
     Args:
-        x:
-        y:
-        xbins:
-        xbnds:
-        ybnds:
-        shape:
+        x (Union[pd.Series, Sequence]): The x-coordinates of the data points.
+        y (Union[pd.Series, Sequence]): The y-coordinates of the data points.
+        xbins (float): The number of bins along the x-axis.
+        xbnds (Sequence): A tuple representing the lower and upper bounds of the x-axis.
+        ybnds (Sequence): A tuple representing the lower and upper bounds of the y-axis.
+        shape (float): The shape parameter of the hexagon (typically between 0 and 1).
 
     Returns:
-
+        Dict[str, Any]: A dictionary containing the following keys:
+            - 'cellid': An array of integers representing the bin index for each data point.
+            - 'cell': An array of integers representing the non-empty bin indices.
+            - 'count': An array of integers representing the count of data points in each bin.
+            - 'xcm': An array of floats representing the x-coordinate of the center of mass for each bin.
+            - 'ycm': An array of floats representing the y-coordinate of the center of mass for each bin.
+            - 'n': An integer representing the total number of non-empty bins.
+            - 'bnd': An array of two integers representing the dimensions of the hexagonal grid.
+            - 'dimen': An array of two integers representing the effective dimensions of the grid.
     """
     if isinstance(x, pd.Series):
         x = x.to_numpy()
@@ -134,13 +146,25 @@ def hexbin(x: Union[pd.Series, Sequence],
 
 def calculate_hex_coords(shots: pd.DataFrame, binwidths: Sequence) -> pd.DataFrame:
     """
+    Calculates hexagonal coordinates and statistics for shot data.
 
     Args:
-        shots:
-        binwidths:
+        shots (pd.DataFrame): DataFrame containing shot data.
+        binwidths (Sequence): A sequence of two floats representing the bin widths for the x and y axes.
 
     Returns:
-
+        pd.DataFrame: A DataFrame containing the calculated hexagonal coordinates and statistics including:
+            - 'x': The x-coordinate of the hexagon.
+            - 'y': The y-coordinate of the hexagon.
+            - 'center_x': The x-coordinate of the center of the hexagon.
+            - 'center_y': The y-coordinate of the center of the hexagon.
+            - 'hexbin_id': The ID of the hexagonal bin.
+            - 'hex_attempts': Total attempts within the hexagonal bin.
+            - 'hex_pct': Percentage of successful shots within the hexagonal bin.
+            - 'hex_points_scored': Total points scored within the hexagonal bin.
+            - 'hex_points_per_shot': Average points per shot within the hexagonal bin.
+            - 'shot_zone_range': The shot zone range associated with the hexagonal bin.
+            - 'shot_zone_area': The shot zone area associated with the hexagonal bin.
     """
     xbnds = hex_bounds(shots.loc_x, binwidths[0])  # MIN MAX по оси X
     xbins = np.diff(xbnds)[0] / binwidths[0]  # Кол-во бинов по оси X
@@ -228,18 +252,44 @@ def calculate_hexbins_from_shots(shots: pd.DataFrame,
                                  fg_pct_limits: Sequence=np.array([0.2, 0.7]),
                                  pps_limits: Sequence=np.array([0.5, 1.5])) -> dict[str, Union[pd.DataFrame, Sequence]]:
     """
+    Calculates hexagonal bin statistics and adjusts them based on shot zone data and league averages.
 
     Args:
-        shots:
-        league_averages:
-        binwidths:
-        min_radius_factor:
-        fg_diff_limits:
-        fg_pct_limits:
-        pps_limits:
+        shots (pd.DataFrame): DataFrame containing shot data with columns.
+        league_averages (pd.DataFrame): DataFrame containing league average shooting statistics.
+        binwidths (Sequence, optional): A sequence of two floats representing the bin widths for the x and y axes.
+                                        Defaults to `np.array([-1, 1])`.
+        min_radius_factor (int, optional): Minimum radius factor for adjusting hexagon sizes. Defaults to `0.6`.
+        fg_diff_limits (Sequence, optional): Limits for clipping the difference between zone and league FG percentage.
+                                            Defaults to `np.array([-0.12, 0.12])`.
+        fg_pct_limits (Sequence, optional): Limits for clipping the FG percentage within the zone.
+                                            Defaults to `np.array([0.2, 0.7])`.
+        pps_limits (Sequence, optional): Limits for clipping the points per shot within the zone.
+                                        Defaults to `np.array([0.5, 1.5])`.
 
     Returns:
-
+        Dict[str, Union[pd.DataFrame, Sequence]]: A dictionary containing the following keys:
+            - 'hex_data': A DataFrame containing the calculated hexagonal bin statistics including:
+                - 'x': The x-coordinate of the hexagon.
+                - 'y': The y-coordinate of the hexagon.
+                - 'center_x': The x-coordinate of the center of the hexagon.
+                - 'center_y': The y-coordinate of the center of the hexagon.
+                - 'hexbin_id': The ID of the hexagonal bin.
+                - 'hex_attempts': Total attempts within the hexagonal bin.
+                - 'hex_pct': Percentage of successful shots within the hexagonal bin.
+                - 'hex_points_scored': Total points scored within the hexagonal bin.
+                - 'hex_points_per_shot': Average points per shot within the hexagonal bin.
+                - 'shot_zone_range': The shot zone range associated with the hexagonal bin.
+                - 'shot_zone_area': The shot zone area associated with the hexagonal bin.
+                - 'radius_factor': Adjusted radius factor for each hexagon.
+                - 'adj_x': Adjusted x-coordinate after applying the radius factor.
+                - 'adj_y': Adjusted y-coordinate after applying the radius factor.
+                - 'bounded_fg_diff': Clipped difference between zone and league FG percentage.
+                - 'bounded_fg_pct': Clipped FG percentage within the zone.
+                - 'bounded_points_per_shot': Clipped points per shot within the zone.
+            - 'fg_diff_limits': The limits for clipping the difference between zone and league FG percentage.
+            - 'fg_pct_limits': The limits for clipping the FG percentage within the zone.
+            - 'pps_limits': The limits for clipping the points per shot within the zone.
     """
     zone_stats = (
         shots
