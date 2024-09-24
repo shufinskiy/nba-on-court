@@ -1,4 +1,4 @@
-from typing import Callable, Sequence
+from typing import Callable, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -7,7 +7,7 @@ import pandas as pd
 BINWIDTHS = np.array([1.5, 1.5])
 
 
-def round_any(x: float, accuracy: float, f: Callable=round):
+def round_any(x: float, accuracy: float, f: Callable=round) -> float:
     """
 
     Args:
@@ -21,7 +21,7 @@ def round_any(x: float, accuracy: float, f: Callable=round):
     return f(x / accuracy) * accuracy
 
 
-def hex_bounds(x: Sequence, binwidth: float):
+def hex_bounds(x: Sequence, binwidth: float) -> np.ndarray:
     """
 
     Args:
@@ -35,7 +35,12 @@ def hex_bounds(x: Sequence, binwidth: float):
                      round_any(np.max(x), binwidth, np.ceil) + 1e-6])
 
 
-def hexbin(x, y, xbins, xbnds, ybnds, shape):
+def hexbin(x: Union[pd.Series, Sequence],
+           y: Union[pd.Series, Sequence],
+           xbins: float,
+           xbnds: Sequence,
+           ybnds: Sequence,
+           shape: float) -> dict:
     """
 
     Args:
@@ -127,7 +132,7 @@ def hexbin(x, y, xbins, xbnds, ybnds, shape):
     }
 
 
-def calculate_hex_coords(shots, binwidths):
+def calculate_hex_coords(shots: pd.DataFrame, binwidths: Sequence) -> pd.DataFrame:
     """
 
     Args:
@@ -215,11 +220,13 @@ def calculate_hex_coords(shots, binwidths):
     return hexbin_coords.merge(hexbin_stats, how="inner", on="hexbin_id")
 
 
-def calculate_hexbins_from_shots(shots, league_averages, binwidths=np.array([-1, 1]),
-                                 min_radius_factor=0.6,
-                                 fg_diff_limits=np.array([-0.12, 0.12]),
-                                 fg_pct_limits=np.array([0.2, 0.7]),
-                                 pps_limits=np.array([0.5, 1.5])):
+def calculate_hexbins_from_shots(shots: pd.DataFrame,
+                                 league_averages: pd.DataFrame,
+                                 binwidths: Sequence=np.array([-1, 1]),
+                                 min_radius_factor: int=0.6,
+                                 fg_diff_limits: Sequence=np.array([-0.12, 0.12]),
+                                 fg_pct_limits: Sequence=np.array([0.2, 0.7]),
+                                 pps_limits: Sequence=np.array([0.5, 1.5])) -> dict[str, Union[pd.DataFrame, Sequence]]:
     """
 
     Args:
