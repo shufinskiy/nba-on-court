@@ -7,7 +7,7 @@ import pandas as pd
 BINWIDTHS = np.array([1.5, 1.5])
 
 
-def round_any(x: float, accuracy: float, f: Callable=round) -> float:
+def _round_any(x: float, accuracy: float, f: Callable=round) -> float:
     """
     Rounds a given floating-point number to a specified accuracy using a custom rounding function.
 
@@ -22,7 +22,7 @@ def round_any(x: float, accuracy: float, f: Callable=round) -> float:
     return f(x / accuracy) * accuracy
 
 
-def hex_bounds(x: Sequence, binwidth: float) -> np.ndarray:
+def _hex_bounds(x: Sequence, binwidth: float) -> np.ndarray:
     """
     Calculates the boundary values for constructing hexagonal bins.
 
@@ -34,11 +34,11 @@ def hex_bounds(x: Sequence, binwidth: float) -> np.ndarray:
         np.ndarray: An array containing the minimum and maximum boundary values
                     for creating hexagonal bins, with adjustments made to ensure proper alignment.
     """
-    return np.array([round_any(np.min(x), binwidth, np.floor) - 1e-6,
-                     round_any(np.max(x), binwidth, np.ceil) + 1e-6])
+    return np.array([_round_any(np.min(x), binwidth, np.floor) - 1e-6,
+                     _round_any(np.max(x), binwidth, np.ceil) + 1e-6])
 
 
-def hexbin(x: Union[pd.Series, Sequence],
+def _hexbin(x: Union[pd.Series, Sequence],
            y: Union[pd.Series, Sequence],
            xbins: float,
            xbnds: Sequence,
@@ -166,12 +166,12 @@ def calculate_hex_coords(shots: pd.DataFrame, binwidths: Sequence) -> pd.DataFra
             - 'shot_zone_range': The shot zone range associated with the hexagonal bin.
             - 'shot_zone_area': The shot zone area associated with the hexagonal bin.
     """
-    xbnds = hex_bounds(shots.loc_x, binwidths[0])  # MIN MAX по оси X
+    xbnds = _hex_bounds(shots.loc_x, binwidths[0])  # MIN MAX по оси X
     xbins = np.diff(xbnds)[0] / binwidths[0]  # Кол-во бинов по оси X
-    ybnds = hex_bounds(shots.loc_y, binwidths[1])  # MIN MAX по оси Y
+    ybnds = _hex_bounds(shots.loc_y, binwidths[1])  # MIN MAX по оси Y
     ybins = np.diff(ybnds)[0] / binwidths[1]  # Кол-во бинов по оси Y
 
-    hb = hexbin(
+    hb = _hexbin(
         x=shots.loc[:, "loc_x"],
         y=shots.loc[:, "loc_y"],
         xbins=xbins,
