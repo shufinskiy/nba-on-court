@@ -2,12 +2,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nba_on_court import nba_on_court, __version__
+from nba_on_court import nba_on_court, __version__, hexdata
 from requests import ConnectionError
 
 
 def test_version():
-    assert __version__ == '0.2.1'
+    assert __version__ == '0.3.0'
 
 
 def test_players_start_quater(ten_players_period):
@@ -68,3 +68,57 @@ def test_replace(ten_players_period):
                        'Andrew Wiggins', 'Eric Paschall', 'Taurean Prince',
                        'Caris LeVert', 'Landry Shamet', 'Jeff Green',
                        'Jarrett Allen']
+
+
+def test_round_any():
+    assert -24.0 == hexdata._round_any(-23.7, 1.5, round)
+
+
+def test_hex_bounds():
+    assert all(np.array([-24.000001,
+                         25.500001]) == hexdata._hex_bounds([-23.7, 25.1],
+                                                            1.5))
+
+
+def test_hexbin():
+    x = np.arange(5)
+    y = np.arange(5)
+
+    xbnds = hexdata._hex_bounds(x, 1.5)
+    xbins = np.diff(xbnds)[0] / 1.5
+    ybnds = hexdata._hex_bounds(y, 1.5)
+    ybins = np.diff(ybnds)[0] / 1.5
+
+    hb = hexdata._hexbin(
+        x=x,
+        y=y,
+        xbins=xbins,
+        xbnds=xbnds,
+        ybnds=ybnds,
+        shape=ybins / xbins
+    )
+
+    assert all(hb["cellid"] == np.array([1,  5,  6, 11, 15]))
+    assert all(hb["cell"] == np.array([1,  5,  6, 11, 15]))
+    assert all(hb["count"] == np.array([1, 1, 1, 1, 1]))
+    assert all(hb["xcm"] == np.array([0., 1., 2., 3., 4.]))
+    assert all(hb["ycm"] == np.array([0., 1., 2., 3., 4.]))
+    assert hb["n"] == 5
+    assert all(hb["bnd"] == np.array([4, 4]))
+    assert all(hb["dimen"] == np.array([6, 4]))
+
+
+def test_calculate_hex_coords(players_shot_data):
+    df = hexdata.calculate_hex_coords(players_shot_data, np.array([1.5, 1.5]))
+    assert df.shape[0] == 48
+    assert np.allclose(df.center_x[0], 22.4999)
+    assert all(np.unique(df.hexbin_id) == np.array([22, 29, 53,
+                                                    68, 291, 309, 312, 438]))
+
+
+def test_calculate_hexbins_from_shots(players_shot_data, league_average):
+    hex_dict = hexdata.calculate_hexbins_from_shots(players_shot_data,
+                                                    league_average, np.array([1.5, 1.5]))
+    assert hex_dict["hex_data"].shape[0] == 48
+    assert np.allclose(hex_dict["hex_data"].center_x[0],22.4999)
+    assert all(np.unique(hex_dict["hex_data"].hexbin_id) == np.array([22, 29, 53, 68, 291, 309, 312, 438]))
