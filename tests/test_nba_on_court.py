@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -118,7 +120,23 @@ def test_calculate_hex_coords(players_shot_data):
 
 def test_calculate_hexbins_from_shots(players_shot_data, league_average):
     hex_dict = hexdata.calculate_hexbins_from_shots(players_shot_data,
-                                                    league_average, np.array([1.5, 1.5]))
+                                                    league_average,
+                                                    np.array([1.5, 1.5]))
     assert hex_dict["hex_data"].shape[0] == 48
-    assert np.allclose(hex_dict["hex_data"].center_x[0],22.4999)
-    assert all(np.unique(hex_dict["hex_data"].hexbin_id) == np.array([22, 29, 53, 68, 291, 309, 312, 438]))
+    assert np.allclose(hex_dict["hex_data"].center_x[0], 22.4999)
+    un_hex_id = np.unique(hex_dict["hex_data"].hexbin_id)
+    assert all(un_hex_id == np.array([22, 29, 53, 68, 291, 309, 312, 438]))
+
+
+def test_load_nba_data():
+    tmp_folder = Path.cwd().joinpath("load_data")
+    tmp_folder.mkdir(parents=True, exist_ok=True)
+    nba_on_court.load_nba_data(path=tmp_folder,
+                               seasons=2023,
+                               data="shotdetail",
+                               seasontype="po",
+                               league="nba",
+                               untar=True)
+    assert tmp_folder.joinpath("shotdetail_po_2023.csv").is_file()
+    df = pd.read_csv(tmp_folder.joinpath("shotdetail_po_2023.csv"))
+    assert df.shape[1] == 24
