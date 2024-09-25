@@ -1,4 +1,4 @@
-from typing import Callable, Sequence, Union
+from typing import Callable, Sequence, Union, Dict
 
 import numpy as np
 import pandas as pd
@@ -166,10 +166,10 @@ def calculate_hex_coords(shots: pd.DataFrame, binwidths: Sequence) -> pd.DataFra
             - 'shot_zone_range': The shot zone range associated with the hexagonal bin.
             - 'shot_zone_area': The shot zone area associated with the hexagonal bin.
     """
-    xbnds = _hex_bounds(shots.loc_x, binwidths[0])  # MIN MAX по оси X
-    xbins = np.diff(xbnds)[0] / binwidths[0]  # Кол-во бинов по оси X
-    ybnds = _hex_bounds(shots.loc_y, binwidths[1])  # MIN MAX по оси Y
-    ybins = np.diff(ybnds)[0] / binwidths[1]  # Кол-во бинов по оси Y
+    xbnds = _hex_bounds(shots.loc_x, binwidths[0])
+    xbins = np.diff(xbnds)[0] / binwidths[0]
+    ybnds = _hex_bounds(shots.loc_y, binwidths[1])
+    ybins = np.diff(ybnds)[0] / binwidths[1]
 
     hb = _hexbin(
         x=shots.loc[:, "loc_x"],
@@ -246,11 +246,11 @@ def calculate_hex_coords(shots: pd.DataFrame, binwidths: Sequence) -> pd.DataFra
 
 def calculate_hexbins_from_shots(shots: pd.DataFrame,
                                  league_averages: pd.DataFrame,
-                                 binwidths: Sequence=np.array([-1, 1]),
+                                 binwidths: Sequence=np.array([1, 1]),
                                  min_radius_factor: int=0.6,
                                  fg_diff_limits: Sequence=np.array([-0.12, 0.12]),
                                  fg_pct_limits: Sequence=np.array([0.2, 0.7]),
-                                 pps_limits: Sequence=np.array([0.5, 1.5])) -> dict[str, Union[pd.DataFrame, Sequence]]:
+                                 pps_limits: Sequence=np.array([0.5, 1.5])) -> Dict[str, Union[pd.DataFrame, Sequence]]:
     """
     Calculates hexagonal bin statistics and adjusts them based on shot zone data and league averages.
 
