@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "nba-on-court"
-version = "0.2.1"
+version = "0.3.0"
 description = "Adding players on court to play-by-play data"
 license = "MIT"
 authors = [
