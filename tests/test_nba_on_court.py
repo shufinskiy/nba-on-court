@@ -140,3 +140,5 @@ def test_load_nba_data():
     assert tmp_folder.joinpath("shotdetail_po_2023.csv").is_file()
     df = pd.read_csv(tmp_folder.joinpath("shotdetail_po_2023.csv"))
     assert df.shape[1] == 24
+    tmp_folder.joinpath("shotdetail_po_2023.csv").unlink()
+    tmp_folder.rmdir()
